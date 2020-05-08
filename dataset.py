@@ -48,6 +48,10 @@ class ListDataset(Dataset):
         img_path, *label_y_str = line.strip('\n').split(' ')
         label_y_str = ''.join(label_y_str)
         img = cv2.imread(img_path) / 255.
+        y, x, _ = img.shape
+        if y < 20 and x < 20:
+            img = cv2.resize(img, (20, 20), interpolation=cv2.INTER_AREA)
+
         # Channels-first
         img = np.transpose(img, (2, 0, 1))
         # As pytorch tensor
