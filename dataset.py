@@ -7,8 +7,9 @@ import cv2
 import numpy as np
 from torchvision import datasets, models, transforms
 
-label_len = 36
-vocab = "<,.+:-?$ 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ>"
+label_len = 30
+vocab = "<,.+:-?$!()№& 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
+        "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ>"
 # start symbol <
 # end symbol >
 char2token = {"PAD": 0}
