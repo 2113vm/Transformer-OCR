@@ -9,8 +9,9 @@ from model import make_model
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
+
 class NoamOpt:
-    "Optim wrapper that implements rate."
+    """Optim wrapper that implements rate."""
     def __init__(self, model_size, factor, warmup, optimizer):
         self.optimizer = optimizer
         self._step = 0
@@ -20,7 +21,7 @@ class NoamOpt:
         self._rate = 0
         
     def step(self):
-        "Update parameters and rate"
+        """Update parameters and rate"""
         self._step += 1
         rate = self.rate()
         for p in self.optimizer.param_groups:
@@ -29,7 +30,7 @@ class NoamOpt:
         self.optimizer.step()
         
     def rate(self, step = None):
-        "Implement `lrate` above"
+        """Implement `lrate` above"""
         if step is None:
             step = self._step
         return self.factor * \
@@ -37,9 +38,8 @@ class NoamOpt:
             min(step ** (-0.5), step * self.warmup ** (-1.5)))
         
 
-
 class LabelSmoothing(nn.Module):
-    "Implement label smoothing."
+    """Implement label smoothing."""
     def __init__(self, size, padding_idx=0, smoothing=0.0):
         super(LabelSmoothing, self).__init__()
         self.criterion = nn.KLDivLoss(size_average=False)
@@ -61,8 +61,9 @@ class LabelSmoothing(nn.Module):
         self.true_dist = true_dist
         return self.criterion(x, Variable(true_dist, requires_grad=False))
 
+
 class SimpleLossCompute:
-    "A simple loss compute and train function."
+    """A simple loss compute and train function."""
     def __init__(self, generator, criterion, opt=None):
         self.generator = generator
         self.criterion = criterion
@@ -78,8 +79,9 @@ class SimpleLossCompute:
             self.opt.optimizer.zero_grad()
         return loss.data * norm
 
+
 def run_epoch(dataloader, model, loss_compute):
-    "Standard Training and Logging Function"
+    """Standard Training and Logging Function"""
     start = time.time()
     total_tokens = 0
     total_loss = 0
@@ -100,11 +102,16 @@ def run_epoch(dataloader, model, loss_compute):
     return total_loss / total_tokens
 
 
-
 def train():
     batch_size = 64
-    train_dataloader = torch.utils.data.DataLoader(ListDataset(['your-train-lines']), batch_size=batch_size, shuffle=True, num_workers=0)
-    val_dataloader = torch.utils.data.DataLoader(ListDataset('your-test-lines'), batch_size=batch_size, shuffle=False, num_workers=0)
+    train_dataloader = torch.utils.data.DataLoader(ListDataset(['your-train-lines']),
+                                                   batch_size=batch_size,
+                                                   shuffle=True,
+                                                   num_workers=0)
+    val_dataloader = torch.utils.data.DataLoader(ListDataset('your-test-lines'),
+                                                 batch_size=batch_size,
+                                                 shuffle=False,
+                                                 num_workers=0)
     model = make_model(len(char2token))
     model.load_state_dict(torch.load('your-pretrain-model-path'))
     model.cuda()
@@ -114,18 +121,12 @@ def train():
             torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
     for epoch in range(10000):
         model.train()
-        run_epoch(train_dataloader, model, 
-              SimpleLossCompute(model.generator, criterion, model_opt))
+        run_epoch(train_dataloader, model, SimpleLossCompute(model.generator, criterion, model_opt))
         model.eval()
-        test_loss = run_epoch(val_dataloader, model, 
-              SimpleLossCompute(model.generator, criterion, None))
+        test_loss = run_epoch(val_dataloader, model, SimpleLossCompute(model.generator, criterion, None))
         print("test_loss", test_loss)
         torch.save(model.state_dict(), 'checkpoint/%08d_%f.pth'%(epoch, test_loss))
 
+
 if __name__=='__main__':
     train()
-
-
-
-
-
