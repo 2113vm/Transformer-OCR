@@ -20,7 +20,7 @@ class NoamOpt:
         self.factor = factor
         self.model_size = model_size
         self._rate = 0
-        
+
     def step(self):
         """Update parameters and rate"""
         self._step += 1
@@ -29,7 +29,7 @@ class NoamOpt:
             p['lr'] = rate
         self._rate = rate
         self.optimizer.step()
-        
+
     def rate(self, step = None):
         """Implement `lrate` above"""
         if step is None:
@@ -37,7 +37,7 @@ class NoamOpt:
         return self.factor * \
             (self.model_size ** (-0.5) *
             min(step ** (-0.5), step * self.warmup ** (-1.5)))
-        
+
 
 class LabelSmoothing(nn.Module):
     """Implement label smoothing."""
@@ -49,7 +49,7 @@ class LabelSmoothing(nn.Module):
         self.smoothing = smoothing
         self.size = size
         self.true_dist = None
-        
+
     def forward(self, x, target):
         assert x.size(1) == self.size
         true_dist = x.data.clone()
@@ -69,10 +69,10 @@ class SimpleLossCompute:
         self.generator = generator
         self.criterion = criterion
         self.opt = opt
-        
+
     def __call__(self, x, y, norm):
         x = self.generator(x)
-        loss = self.criterion(x.contiguous().view(-1, x.size(-1)), 
+        loss = self.criterion(x.contiguous().view(-1, x.size(-1)),
                               y.contiguous().view(-1)) / norm
         if self.opt is not None:
             loss.backward()
@@ -81,8 +81,10 @@ class SimpleLossCompute:
         return loss.data * norm
 
 
-def run_epoch(dataloader, model, loss_compute):
+def run_epoch(dataloader, model, loss_compute, count_iter=0):
     """Standard Training and Logging Function"""
+    if count_iter == 0:
+        count_iter = len(dataloader)
     start = time.time()
     total_tokens = 0
     total_loss = 0
@@ -100,6 +102,8 @@ def run_epoch(dataloader, model, loss_compute):
                     (i, loss / batch.ntokens, tokens / elapsed))
             start = time.time()
             tokens = 0
+        if i > count_iter:
+            return total_loss / total_tokens
     return total_loss / total_tokens
 
 
@@ -122,9 +126,9 @@ def train(args):
     criterion.cuda()
     model_opt = NoamOpt(model.tgt_embed[0].d_model, 1, 2000,
             torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
-    for epoch in range(10000):
+    for epoch in range(100):
         model.train()
-        run_epoch(train_dataloader, model, SimpleLossCompute(model.generator, criterion, model_opt))
+        run_epoch(train_dataloader, model, SimpleLossCompute(model.generator, criterion, model_opt), count_iter=10000)
         model.eval()
         test_loss = run_epoch(val_dataloader, model, SimpleLossCompute(model.generator, criterion, None))
         print("test_loss", test_loss)
