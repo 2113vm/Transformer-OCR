@@ -259,8 +259,8 @@ def make_model(tgt_vocab, N=4,
                d_model=256, d_ff=1024, d_feature=1024, h=8, dropout=0.1):
     "Helper: Construct a model from hyperparameters."
 
-    resnet = getattr(models, 'resnet101')(pretrained=False)
-    resnet.load_state_dict(torch.load('resnet101.pth'))
+    resnet = getattr(models, 'resnet101')(pretrained=True)
+    # resnet.load_state_dict(torch.load('resnet101.pth'))
 
     c = copy.deepcopy
     attn = MultiHeadedAttention(h, d_model)
