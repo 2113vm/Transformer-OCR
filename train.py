@@ -5,13 +5,10 @@ import time
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
-import time
 from dataset import ListDataset
 from dataset import char2token
 from dataset import Batch
 from model import make_model
-import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 
 class NoamOpt:
