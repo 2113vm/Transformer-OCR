@@ -1,3 +1,7 @@
+import os
+import argparse
+import time
+
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
@@ -102,20 +106,22 @@ def run_epoch(dataloader, model, loss_compute):
     return total_loss / total_tokens
 
 
-def train():
-    batch_size = 64
-    train_dataloader = torch.utils.data.DataLoader(ListDataset(['your-train-lines']),
+def train(args):
+    batch_size = 1
+    train_dataloader = torch.utils.data.DataLoader(ListDataset(args.train_annot_path),
                                                    batch_size=batch_size,
                                                    shuffle=True,
                                                    num_workers=0)
-    val_dataloader = torch.utils.data.DataLoader(ListDataset('your-test-lines'),
+    val_dataloader = torch.utils.data.DataLoader(ListDataset(args.test_annot_path),
                                                  batch_size=batch_size,
                                                  shuffle=False,
                                                  num_workers=0)
     model = make_model(len(char2token))
-    model.load_state_dict(torch.load('your-pretrain-model-path'))
-    model.cuda()
+    if args.checkpoint:
+        model.load_state_dict(torch.load(args.checkpoint))
     criterion = LabelSmoothing(size=len(char2token), padding_idx=0, smoothing=0.1)
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+    model.cuda()
     criterion.cuda()
     model_opt = NoamOpt(model.tgt_embed[0].d_model, 1, 2000,
             torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
@@ -129,4 +135,10 @@ def train():
 
 
 if __name__=='__main__':
-    train()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--train-annot-path', required=True)
+    parser.add_argument('--test-annot-path', required=True)
+    parser.add_argument('--checkpoint', default=False)
+    args = parser.parse_args()
+
+    train(args)
