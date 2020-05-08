@@ -35,7 +35,7 @@ class ListDataset(Dataset):
             fname = [fname]
         for f in fname:
             lines = open(f).readlines()
-            self.lines += [i for i in lines if not illegal(i.strip('\n').split('\t')[1])]
+            self.lines += [i for i in lines if not illegal(i.strip('\n').split(' ')[1])]
 
     def __len__(self):
         return len(self.lines)
@@ -45,7 +45,8 @@ class ListDataset(Dataset):
         line: image path\tlabel
         '''
         line = self.lines[index]
-        img_path, label_y_str = line.strip('\n').split('\t')
+        img_path, *label_y_str = line.strip('\n').split(' ')
+        label_y_str = ''.join(label_y_str)
         img = cv2.imread(img_path) / 255.
         # Channels-first
         img = np.transpose(img, (2, 0, 1))
@@ -118,8 +119,11 @@ class FeatureExtractor(nn.Module):
 
 
 if __name__ == '__main__':
-    listdataset = ListDataset('your-lines')
-    dataloader = torch.utils.data.DataLoader(listdataset, batch_size=2, shuffle=False, num_workers=0)
+    listdataset = ListDataset('../data/test_cig_annot.txt')
+    dataloader = torch.utils.data.DataLoader(listdataset,
+                                             batch_size=1,
+                                             shuffle=False,
+                                             num_workers=0)
     for epoch in range(1):
         for batch_i, (imgs, labels_y, labels) in enumerate(dataloader):
             continue
